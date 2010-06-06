@@ -189,6 +189,13 @@ AC_COMPILE_IFELSE(
 CFLAGS="$OLD_CFLAGS"
 AC_LANG_POP(C)
 
+AC_ARG_WITH([android], [AC_HELP_STRING([--with-android=PATH]
+    [set Android system build path])],[
+    ICU_CONFIG="" 
+    ICU_LOCAL_CFLAGS="-I$withval/external/icu4c/common -I$withval/external/icu4c/i18n"
+    ICU_LOCAL_LDFLAGS="-L$withval/out/target/product/generic/system/lib"
+    ICU_LOCAL_BIN=
+], [
 AC_ARG_WITH([win32-icu-binaries], [AC_HELP_STRING([--with-win32-icu-binaries=PATH],
     [set PATH to the Win32 native ICU binaries directory])], [
     ICU_CONFIG="" # supposed to be a command to query options...
@@ -200,13 +207,19 @@ AC_ARG_WITH([win32-icu-binaries], [AC_HELP_STRING([--with-win32-icu-binaries=PAT
     ICU_LOCAL_CFLAGS=`$ICU_CONFIG --cppflags-searchpath`
     ICU_LOCAL_LDFLAGS=`$ICU_CONFIG --ldflags-searchpath`
     ICU_LOCAL_BIN=
-])
+])])
 
 AC_SUBST(ICU_CONFIG)
 AC_SUBST(ICU_LOCAL_CFLAGS)
 AC_SUBST(ICU_LOCAL_LDFLAGS)
 AC_SUBST(ICU_LOCAL_BIN)
 
+AC_ARG_WITH([android-curl], [AC_HELP_STRING([--with-android-curl=PATH]
+    [set PATH to directory where curl is built for android])], [
+    CURL_CFLAGS="-I$withval/include -DCURL_STATICLIB"
+    CURL_LIBDIR="$withval/lib"
+    CURL_LDFLAGS="-L$CURL_LIBDIR -lcurl"
+], [
 AC_ARG_WITH([win32-curl], [AC_HELP_STRING([--with-win32-curl=PATH],
     [set PATH to the Win32 native curl directory])], [
     # default build on windows is a static lib, and that's what we want too
@@ -216,12 +229,15 @@ AC_ARG_WITH([win32-curl], [AC_HELP_STRING([--with-win32-curl=PATH],
 ], [
     AC_CHECK_CURL([7.18.0])
     CURL_LDFLAGS=-lcurl
-])
+])])
 
 AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
 AC_SUBST(CURL_LDFLAGS)
 
+#Probably should fix this up better in the future for cross-compiles in general
+#instead of just keeping this exception for android
+if test "x$CC" != "xagcc"; then
 case "$(uname -s)" in
   Linux)
     LIBS="$LIBS -lcrypt"
@@ -234,6 +250,7 @@ case "$(uname -s)" in
     LIBS="$LIBS -lcrypto"
   ;;
 esac
+fi
 
 AC_PATH_PROG([ERL], [erl])
 

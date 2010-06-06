@@ -127,12 +127,22 @@ readfp(JSContext* cx, FILE* fp, size_t* buflen)
     size_t used = 0;
     size_t byteslen = 256;
     size_t readlen = 0;
+    int c;
 
     bytes = JS_malloc(cx, byteslen);
     if(bytes == NULL) return NULL;
     
-    while((readlen = js_fgets(bytes+used, byteslen-used, stdin)) > 0)
+    while(JS_TRUE)
     {
+	//js_fgets is no longer an external API in libjs (in hg).
+	while(used < byteslen && (c = getc(stdin)) != EOF) 
+	{ 
+		bytes[used] = c;
+		used++;
+	}
+	bytes[used] = '\0';
+	if (c == EOF) break;
+
         used += readlen;
 
         if(bytes[used-1] == '\n')
